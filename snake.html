@@ -8,6 +8,10 @@
     </head>
     <body>
 
+        <div id="score">
+            0
+        </div>
+
         <canvas id="gameCanvas" width="300" height="300">&lt;canvas>
             <script>
                 let canvas = document.getElementById("gameCanvas");
@@ -24,6 +28,7 @@
 
                 /// init snake (length: 5)
                 let snake = [  {x: 150, y: 150},  {x: 140, y: 150},  {x: 130, y: 150},  {x: 120, y: 150},  {x: 110, y: 150},];
+                let score = 0;
                 
                 /// run the program
                 main();
@@ -32,6 +37,7 @@
                         setTimeout(
                             function onTick() {
                                 clearCanvas();
+                                drawFood();
                                 advanceSnake();
                                 drawSnake();
                                 // Call main again   
@@ -89,7 +95,14 @@
                 function advanceSnake() {
                     const head = {x: snake[0].x + dx, y: snake[0].y + dy};
                     snake.unshift(head);
-                    snake.pop();
+                    const didEatFood = snake[0] === foodX && snake[0].y === foodY;
+                    if (didEatFood) {
+                        score += 10;
+                        document.getElementById('score').innerHTML = score;
+                        createFood();
+                    } else {
+                        snake.pop();
+                    }
                 }
 
                 /// clear the canvas completely
@@ -100,7 +113,40 @@
                     context.strokeRect(0, 0, gameCanvas.width, gameCanvas.height);
                 }
 
+                /// get rand point on 10 intervals in range
+                function randomTen(min, max) {
+                    return Math.round(
+                        (Math.random() * (max - min) + min) / 10
+                    ) * 10;
+                }
 
+                var foodX;
+                var foodY;
+
+                /// generate new food
+                function createFood() {
+                    foodX = randomTen(0, gameCanvas.width - 10);
+                    foodY = randomTen(0, gameCanvas.height - 10);
+
+                    // check if snake is on the food
+                    snake.forEach(
+                        function isFoodOnSnake(part) {
+                            const foodIsOnSnake = part.x == foodX && part.y == foodY;
+                            // if so, generate new food
+                            if (foodIsOnSnake) {
+                                createFood();
+                            }
+                        }
+                    );
+                }
+
+                /// draw food on canvas
+                function drawFood() {
+                    context.fillStyle = 'red';
+                    context.strokeStyle = 'darkred';
+                    context.fillRect(foodX, foodY, 10, 10);
+                    context.strokeRect(foodX, foodY, 10, 10);
+                }
             </script>
 
     </body>
