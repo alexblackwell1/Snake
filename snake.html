@@ -29,23 +29,28 @@
                 /// init snake (length: 5)
                 let snake = [  {x: 150, y: 150},  {x: 140, y: 150},  {x: 130, y: 150},  {x: 120, y: 150},  {x: 110, y: 150},];
                 let score = 0;
+                var changingDirection = false;
+
+                /// speeds -- dx: horiz, dy: vertical
+                var dx = 10;
+                var dy = 0;
                 
                 /// run the program
+                createFood();
                 main();
                 function main() {
-                    {
-                        setTimeout(
-                            function onTick() {
-                                clearCanvas();
-                                drawFood();
-                                advanceSnake();
-                                drawSnake();
-                                // Call main again   
-                                main();
-                            },
-                            100
-                        )
-                    }
+                    if (didGameEnd()) return;
+                    setTimeout(
+                        function onTick() {
+                            changingDirection = false;
+                            clearCanvas();
+                            drawFood();
+                            advanceSnake();
+                            drawSnake();
+                            main();
+                        },
+                        100
+                    )
                 }
 
                 /// draw the snake: call when to update snake state on canvas
@@ -61,9 +66,6 @@
                     context.strokeRect(snakePart.x, snakePart.y, 10, 10);
                 }
 
-                /// speeds -- dx: horiz, dy: vertical
-                var dx = 10;
-                var dy = 0;
 
                 function changeDirection(event) {
                     const LEFTKEY = 37;
@@ -75,6 +77,12 @@
                     const goingDown = dy === 10;
                     const goingRight = dx === 10;
                     const goingLeft = dx === -10;
+                    
+                    if (changingDirection) {
+                        return;
+                    }
+
+                    changingDirection = true;
 
                     if (keyPressed === LEFTKEY && !goingRight) {
                         dx = -10;
@@ -95,7 +103,7 @@
                 function advanceSnake() {
                     const head = {x: snake[0].x + dx, y: snake[0].y + dy};
                     snake.unshift(head);
-                    const didEatFood = snake[0] === foodX && snake[0].y === foodY;
+                    const didEatFood = snake[0].x === foodX && snake[0].y === foodY;
                     if (didEatFood) {
                         score += 10;
                         document.getElementById('score').innerHTML = score;
@@ -115,9 +123,7 @@
 
                 /// get rand point on 10 intervals in range
                 function randomTen(min, max) {
-                    return Math.round(
-                        (Math.random() * (max - min) + min) / 10
-                    ) * 10;
+                    return Math.round((Math.random() * (max-min) + min) / 10) * 10;
                 }
 
                 var foodX;
@@ -127,12 +133,9 @@
                 function createFood() {
                     foodX = randomTen(0, gameCanvas.width - 10);
                     foodY = randomTen(0, gameCanvas.height - 10);
-
-                    // check if snake is on the food
                     snake.forEach(
                         function isFoodOnSnake(part) {
                             const foodIsOnSnake = part.x == foodX && part.y == foodY;
-                            // if so, generate new food
                             if (foodIsOnSnake) {
                                 createFood();
                             }
@@ -143,10 +146,26 @@
                 /// draw food on canvas
                 function drawFood() {
                     context.fillStyle = 'red';
-                    context.strokeStyle = 'darkred';
+                    context.strokestyle = 'darkred';
                     context.fillRect(foodX, foodY, 10, 10);
                     context.strokeRect(foodX, foodY, 10, 10);
                 }
+
+                //end the game
+                function didGameEnd() {
+                    for (let i = 4; i < snake.length; i++) {
+                        const didCollide = snake[i].x === snake[0].x && snake[i].y === snake[0].y
+                        if (didCollide)
+                            return true;
+                    }
+
+                    const hitLeftWall = snake[0].x < 0;
+                    const hitRightWall = snake[0].x > gameCanvas.width - 10;
+                    const hitToptWall = snake[0].y < 0;
+                    const hitBottomWall = snake[0].y > gameCanvas.height - 10;
+                    return hitLeftWall || hitRightWall || hitToptWall || hitBottomWall;
+                }
+
             </script>
 
     </body>
